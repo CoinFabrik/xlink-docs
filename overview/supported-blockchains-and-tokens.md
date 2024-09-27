@@ -25,3 +25,83 @@ We list below the different bridgable tokens with XLink.
 | **Stacks**     | aBTC, ALEX, DOG•GO•TO•THE•MOON, ETHEREUM, NOT, PEPE, SATOSHI•NAKAMOTO•INU, SKO, sUSDT, uBTC, vLiALEX, vLiSTX, WELSH  |
 | **X Layer**    | aBTC, ALEX, sUSDT, uBTC, vLiALEX, vLiSTX                                                                           |
 
+
+# Preview Test
+
+<div>
+  <label for="sourceBlockchain">Source Blockchain:</label>
+  <select id="sourceBlockchain" onchange="updateTable()">
+    <option value="BTC">BTC</option>
+    <option value="BNB">BNB</option>
+  </select>
+
+  <label for="destinationBlockchain">Destination Blockchain:</label>
+  <select id="destinationBlockchain" onchange="updateTable()">
+    <option value="BNB">BNB</option>
+    <option value="BTC">BTC</option>
+  </select>
+</div>
+
+<table id="tokenTable">
+  <thead>
+    <tr>
+      <th id="sourceHeader">Source Token</th>
+      <th id="destinationHeader">Destination Token</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Select a source and destination blockchain</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  const tokenMappings = {
+    "BTC": {
+      "BNB": ["BTCB", "aBTC"],
+      "BTC": ["BTC"]
+    },
+    "BNB": {
+      "BTC": ["BTCB"],
+      "BNB": ["BNB"]
+    }
+  };
+
+  function updateTable() {
+    const source = document.getElementById("sourceBlockchain").value;
+    const destination = document.getElementById("destinationBlockchain").value;
+
+    const tableBody = document.getElementById("tokenTable").querySelector("tbody");
+    tableBody.innerHTML = "";  // Clear the table
+
+    if (tokenMappings[source] && tokenMappings[source][destination]) {
+      const mappings = tokenMappings[source][destination];
+      mappings.forEach((destToken) => {
+        const row = document.createElement("tr");
+        const sourceCell = document.createElement("td");
+        const destCell = document.createElement("td");
+        sourceCell.textContent = source;
+        destCell.textContent = destToken;
+        row.appendChild(sourceCell);
+        row.appendChild(destCell);
+        tableBody.appendChild(row);
+      });
+    } else {
+      const row = document.createElement("tr");
+      const sourceCell = document.createElement("td");
+      const destCell = document.createElement("td");
+      sourceCell.textContent = "No mappings found";
+      destCell.textContent = "";
+      row.appendChild(sourceCell);
+      row.appendChild(destCell);
+      tableBody.appendChild(row);
+    }
+
+    // Update Headers
+    document.getElementById("sourceHeader").textContent = source + " Token";
+    document.getElementById("destinationHeader").textContent = destination + " Token";
+  }
+</script>
+
