@@ -17,33 +17,31 @@ The lifecycle of liquid staking pools is based on three main operations:
 
 These are the main three features of the `xlink-staking` contract. Each of these has an impact on the contract storage and generates on-chain events, which are listened by the XLink off-chain components to perform actions.
 
-<!-- ### Shares-based staking -->
-
-### Shares representation
+### Shares-based staking
 
 The system utilizes **shares** instead of token amounts to represent users' staking positions. Shares provide a fixed representation of the users' proportional ownership of the total amount staked, which intrinsically grows over time due the reinvestment of the staking rewards.
 
 ## Reward accrual
 
-The account for the restaked rewards is permissionlessly performed by **updaters**, who submit messages signed by **validators**. This action is performed via the [`add-rewards`](#add-rewards) function.
+The account for the restaked rewards is permissionlessly performed by **updaters**, who submit messages signed by **validators**. This action is performed via the [`add-rewards`](#add-rewards) function and its the core operation of the liquid staking mechanism.
 
-Validators are XLink protocol actors responsible for maintaining the system's integrity and synchronization. In this sense, they role includes generating a proof each time rewards are successfully collected and restaked in the external protocol.
+Validators are XLink protocol actors responsible for maintaining the system's integrity and synchronization. In this sense, their role includes generating a **proof** whenever rewards are successfully collected and restaked in the external protocol.
 
-The proof consists of a signed message indicating the token, the new amount of total accrued rewards and a timestamp. Once upaters collect a sufficient number of proofs, they are in charge of submitting them to the Staking Manager to perform state updates.
+Each proof consists of a signed message indicating the token, the updated total accrued rewards, and a timestamp. Once updaters collect a sufficient number of proofs, they submit these to the Staking Manager to perform a state update.
 
-Note that this operation does not involve shares management and the key state update is the total staked amount in the [`total-staked`](#total-staked) map. This is the core operation of the liquid staking logic.
+It is important to note that this operation does not involve shares management. The key state update is the total staked amount in the [`total-staked`](#total-staked) map.
 
 ## Stake / Unstake
 
 ### Authorization
 
-These operations are only available for **governance** roles (guarded by [`is-dao-or-extension`](#is-dao-or-extension) function), what does this imply?
+These operations are exclusively available for **governance** roles, as they are guarded by the [`is-dao-or-extension`](#is-dao-or-extension) function. What does this imply?
 
-The [`stake`](#stake) and [`unstake`](#unstake) functions are designed to have a DAO extension as `contract-caller`. Otherwise, the `tx-sender` must be the DAO calling through a proposal contract.
+The [`stake`](#stake) and [`unstake`](#unstake) functions are designed to be called by a DAO extension acting as the `contract-caller`. Alternatively, in more exceptional cases, the `tx-sender` can be the DAO itself calling through a proposal contract.
 
-This means that a regular user can only access these features through an intermediary contract (façade, endpoint, etc.), which needs to be necessarily an enabled DAO extension. The external call to the `xlink-staking` contract, a.k.a. Staking Manager can be implemented in two different ways, which results in two different authentications for the `tx-sender`, the staker.
+This setup implies that end users can only access these features indirectly through intermediary contracts (façade, endpoint, etc.) that must be enabled DAO extensions. The external call from the extension to the `xlink-staking` contract, a.k.a. Staking Manager, can be implemented in two ways, resulting in different authentications for the `tx-sender`, the staker.
 
-Summarizing, the regular use of these operations is by users invoking them via intermediary contracts which need to be DAO extensions. However, this is not the only possibility, as they can also be called by a proposal contract executed by the DAO.
+In summary, these operations are typically accessed by users through intermediary contracts registered as DAO extensions. However, they can also be directly called by a proposal contract executed by the DAO.
 
 #### End user call
 
@@ -58,6 +56,8 @@ flowchart LR
     sm2 -.-o box2[["**tx-sender** & **contract-caller**: DAO extension"]]
 ```
 
+The `as-contract` call type is the most common approach for liquid staking implementations, where the intermediary contract stakes on behalf of users and provides them with a receipt in the form of a new (rebasing) token.
+
 #### Governance call
 
 ```mermaid
@@ -71,58 +71,57 @@ flowchart LR
 
 ### Mechanics
 
-In the Staking Manager, the staker is the `tx-sender`. As explained before, depending on the intermediate contract design, the staker may be an end user or the endoint/façade that acts in behalf of the user. So every time we say staker (or `user`, as it is defined within the contract), we are referring to any of these two possibilities.
+In the Staking Manager, the staker represented by the `tx-sender`. As explained above, depending on the intermediary contract design, the staker may either be an end user or the endoint/façade acting on behalf of the user. Therefore, every reference to "staker" (or `user`, as defined within the contract) applies to any of these two possibilities.
 
-Upon staking, the shares that respresent the amount to-be-staked are calculated and stored in the [`user-shares`](#user-shares) map. This is the staking position and represents the user's portion of the total amount staked. Then, the amount is transferred from the `tx-sender` to the Staking Manager. Finally, since the total amount staked and total shares increased, this state tracking is updated.
+Upon staking, the shares corresponding to the amount being staked are calculated and stored in the [`user-shares`](#user-shares) map. This is the staking position and represents the user's portion of the total amount staked. During this operation, the amount to stake is transferred from the `tx-sender` to the Staking Manager, and since the total amount staked and total shares increased, the contract storage is updated to reflect the new state. Refer to the [`stake`](#stake) function for detailed information.
 
-Unstaking performs the exact reverse operations. If first calculates the shares that correspond to the amount willing to unstake. Then, the unstaked amount is transferred from the Staking Manager to the `tx-sender`. Finally, state upates are performed to decrease user shares, total shares and total amount staked.
+Unstaking performs the inverse operations. It first calculates the shares that correspond to the amount willing to unstake. Then, the unstaked amount is transferred from the Staking Manager to the `tx-sender` and, finally, state upates are performed to decrease user shares, total shares and total amount staked.
 
-Note that these two operations involve shares management and mutate the staking state of a certain token in three dimensions: total shares, total amount staked and user share-based staking position.
+Note that both staking and unstaking operations involve share management and mutate the staking status of a token in three dimensions: total shares, total amount staked and user's share-based staking position.
 
 #### Amount to shares conversion
 
-On each staking and unstaking action, an amount-to-shares conversion is perfomed, which is given by the following equation:
+On every staking and unstaking action, an amount-to-shares conversion is perfomed using the following equation:
 
-$$ \textrm{Shares} = \frac{\textrm{Amount}}{\textrm{Total Staked}} \; \cdot \; \textrm{Total Shares}.$$
+$$ \textrm{Shares} = \frac{\textrm{Amount}}{\textrm{Total Staked}} \; \cdot \; \textrm{Total Shares}. $$
 
-This is how [`get-shares-given-amount`](#get-shares-given-amount) function works. The ratio between the total amount staked and the total shares determines the share price in token units: how many tokens represents one share?
+This is how [`get-shares-given-amount`](#supporting-features) function works. The ratio between the total staked amount and the total shares determines the "share price" in token units, i.e., how many tokens one share represents:
 
-$$ \textrm{Price} = \frac{\textrm{Total Staked}}{\textrm{Total Shares}}$$
+$$ \textrm{Price} = \frac{\textrm{Total Staked}}{\textrm{Total Shares}} $$
 
-Once the staking/unstaking action finishes, these two values are updated in a way that the price remains constant.
+Before completing a staking or unstaking operation, these values are updated in a way that the share price remains constant. In contrast, reward accrual operations modify this price by maintaing total shares constant and incresing the total staked value.
 
 ## Roles
 
-- **Validators**: Trusted entities responsible for maintaining the system's integrity and synchronization. Within the XLink Staking Manager, are the actors who proof the reward reinvestment on the external staking protocol.
-- **Updaters**: Actors resposible for submitting proofs to perform the total staked value update for any token.
-- **Governance**: Include DAO and its enabled extensions. These roles are authenticated via the [`is-dao-or-extension`](#is-dao-or-extension) function. The extensions are authenticated as `contract-caller`, while the DAO is authenticated a the `tx-sender` (proposal execution scenario).
+- **Validators**: Trusted entities responsible for maintaining the system's integrity and synchronization. In the context of the XLink Staking Manager, they generate proofs of reward reinvestment on the external staking protocol.
+- **Updaters**: Actors resposible for submitting validator proofs to to update the total staked value for any token in the system.
+- **Governance**: Includes DAO and its enabled extensions. These roles are authenticated via the [`is-dao-or-extension`](#is-dao-or-extension) function. Extensions are authenticated as `contract-caller`, while the DAO is authenticated as the `tx-sender` in proposal execution scenarios.
 
 ## Tokens
 
-Each token within the Staking Manager will have:
+Each token within the Staking Manager has the following attributes.
 
-- A Stacks principal indicating the token implementation contract, which needs to be approved in the [`approved-tokens`](#approved-tokens) map.
-- A total amout staked, tracked by the [`total-staked`](#total-staked) map.
-- A total amount of accrued rewards, which are the ones already restaked, tracked by the [`accrued-rewards`](#accrued-rewards) map.
-- A total amount of shares issued, tracked by the [`total-shares`](#total-shares) map.
-- A register of each staker and their amount of shares, where the sum of all staker shares equal the total shares. This ownership is tracked by the [`user-shares`](#user-shares) map.
+- **Implementation contract**: A Stacks principal indicating the token's implementation contract, which needs to be approved in the [`approved-tokens`](#approved-tokens) map.
+- **Total staked**: A total amount staked, tracked in the [`total-staked`](#total-staked) map.
+- **Accrued rewards**: A total amount of rewards already restaked, tracked in the [`accrued-rewards`](#accrued-rewards) map.
+- **Total shares**: A total amount of shares issued for the token, tracked in the [`total-shares`](#total-shares) map.
+- **Staker registry**: A record of each staker's shares, where the sum of all staker shares equals the total shares. This ownership is tracked in the [`user-shares`](#user-shares) map.
 
 ## Features
 
 ### Main operations
 
-All these operations are privileged and protected by the [`is-dao-or-extension`](#is-dao-or-extension) function, meaning that only governance roles can execture them. However, the [`add-rewards`](#add-rewards) function is more permissive than staking and unstaking actions, as it also allows approved updaters as callers (`tx-sender`).
+These operations are privileged and protected by the [`is-dao-or-extension`](#is-dao-or-extension) function, allowing only governance roles to execute them. However, the [`add-rewards`](#add-rewards) function is more permissive than staking and unstaking, also allowing approved updaters as callers (`tx-sender`).
 
 #### `add-rewards`
 
-Permissionless adds accrued staking rewards to a specific token. The function requires that the message `{ token: principal, accrued-rewards: uint, update-block: uint }` is signed by a sufficient number of approved validators ([`required-validators`](#required-validators)). The message must be proccessed within a certain block range determined by the `update-block` value and [`block-threshold`](#block-threshold); otherwise, the message ir considered too old.
+Adds accrued staking rewards for a specific token. The function requires a message `{ token: principal, accrued-rewards: uint, update-block: uint }` signed by a sufficient number of approved validators ([`required-validators`](#required-validators)). The message must be proccessed within a block range determined by the `update-block` value and [`block-threshold`](#block-threshold) variable, or it is considered expired.
 
 Actions performed:
 
-- Calculates the delta of previous accrued rewards and the new amount given by the `accrued-rewards` value of the message. Mints the delta amount to its own balance (`xlink-staking` contract) to account for the new staked amount.
-- Updates the [`accrued-rewards`](#accrued-rewards) map.
-- Updates the [`total-staked`](#total-staked) map.
-- Emits a log with an `"add-rewards"` notification and a payload with details.
+- Calculates the difference (`delta`) between previous and the new value of accrued rewards, given by the `accrued-rewards` value of the message. Mints the `delta` amount to the `xlink-staking` contract's balance to account for the new staked amount.
+- Updates the [`accrued-rewards`](#accrued-rewards) and [`total-staked`](#total-staked) maps.
+- Emits an `"add-rewards"` log with a detailed payload.
 
 ##### Parameters
 
@@ -134,17 +133,15 @@ Actions performed:
 
 #### `stake`
 
-Stakes a certain amount of a token.
+Allows users to stake a specified token amount.
 
 Actions performed:
 
-- Calls `add-rewards` to update the total staked value if necessary. Note this is very important since the `total-staked` value of the token is utilized to calculate the shares given the amount.
-- Calculates `shares` that corresponds to the user given the amount to stake.
+- Calls `add-rewards` to update the total staked value if needed. Note this is very important since the `total-staked` value of the token is utilized to calculate the shares.
+- Calculates `shares` corresponding to the newly stake amount.
 - Transfers the specified amount from the `tx-sender` (user) to the `xlink-staking` contract.
-- Updates the `user-shares` map.
-- Updates the `total-shares` map.
-- Updates the `total-staked` map.
-- Emits a log with a `"stake"` notification and a payload with details including user, token and updated values.
+- Updates the `user-shares`, `total-shares` and `total-staked` maps.
+- Emits a `"stake"` log with a detailed payload (user, token, updated values).
 
 ##### Parameters
 
@@ -157,17 +154,15 @@ Actions performed:
 
 #### `unstake`
 
-Unstakes a certain amount of a token.
+Allows users to unstake a specified token amount.
 
 Actions performed:
 
-- Calls `add-rewards` to update the total staked value if necessary. Note this is very important since the `total-staked` value of the token is utilized to calculate the shares given the amount.
-- Calculates `shares` that corresponds to the user given the amount to unstake.
-- Updates the `user-shares` map.
-- Updates the `total-shares` map.
-- Updates the `total-staked` map.
+- As in [`stake`](#stake), calls `add-rewards` to update the total staked value if needed.
+- Calculates `shares` corresponding to the amount to unstake.
 - Transfers the specified amount from the `tx-sender` (user) to the `xlink-staking` contract.
-- Emits a log with a `"stake"` notification and a payload with details including user, token and updated values.
+- Updates the `user-shares`, `total-shares` and `total-staked` map.
+- Emits an `"unstake"` log with a detailed payload (user, token, updated values).
 
 ##### Parameters
 
@@ -180,17 +175,18 @@ Actions performed:
 
 ### Governance
 
-The following features are guarded by the [`is-dao-or-extension`](#is-dao-or-extension) function, meaning that their use is resticted to the LISA DAO or enabled extensions.
+These features are protected by the [`is-dao-or-extension`](#is-dao-or-extension) function and resticted to the XLink DAO or its enabled extensions.
 
 #### `withdraw`
 
-Withdraws an amount of any approved token and substracts it from the total amount staked. Tokens are transferred to the `tx-sender`.
+Withdraws an amount of any approved token and deducts it from the total staked amount. This function serves as an emergecy mechanism designed to adjust protocol values if necessary,
+though  such a situation is considered rare.
 
 Actions performed:
 
 - Transfers the specified amount from the `xlink-staking` contract to the `tx-sender`.
 - Updates the `total-staked` map.
-- Emits a log with a `"withdraw"` notification and a payload with details.
+- Emits a `"withdraw"` log and a payload.
 
 ##### Parameters
 
@@ -308,7 +304,7 @@ Standard protocol function to check whether the `contract-caller` is an enabled 
 
 ### Getters
 
-These functions are getters to revieve all the [storage](#storage) variables and values withing each map. For maps, note that for validators it throws if the principal is not a key within `validators-regitry`, while in the token maps they return a default value.
+Getter functions to retrieve all the [storage](#storage) variables and values within each map. For maps related to validators, an error is thrown if the principal is not present as a key within the [`validators-regitry`](#validators-registry). In contrast, for token maps, a default value is returned if the principal is not found.
 
 #### Variables
 
@@ -427,8 +423,6 @@ Mathematical constant used to restrict the decimal precision to 8 digits.
 Defines the upper bound for the [`required-validators`](#required-validators) variable.
 
 ## Contract calls
-
-<!-- Describe calls to other contracts with bullet points. Why, in which cases, is this interaction (call) utilized within the contact? -->
 
 - `<ft-trait>`: Interaction with any approved token to perform mint actions ([`add-rewards`](#add-rewards)) and transfers (mostly within [`stake`](#stake) and [`unstake`](#unstake), but also within the [`withdraw`](#withdraw) governance function). The `ft-trait` within the contract is the custom SIP-010 implementation for handling fixed notation, available at `'SP2XD7417HGPRTREMKF748VNEQPDRR0RMANB7X1NK.trait-sip-010`.
 
