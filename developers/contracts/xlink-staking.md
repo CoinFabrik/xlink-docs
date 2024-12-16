@@ -71,41 +71,47 @@ flowchart LR
 
 ### Mechanics
 
-In the Staking Manager, the staker represented by the `tx-sender`. As explained above, depending on the intermediary contract design, the staker may either be an end user or the endoint/façade acting on behalf of the user. Therefore, every reference to "staker" (or `user`, as defined within the contract) applies to any of these two possibilities.
+In the Staking Manager, the staker is represented by the `tx-sender`. As explained above, depending on the intermediary contract design, the staker may either be an end user or the endpoint/façade acting on behalf of the user. Therefore, every reference to "staker" (or `user`, as defined within the contract) applies to any of these two possibilities.
 
 Upon staking, the shares corresponding to the amount being staked are calculated and stored in the [`user-shares`](#user-shares) map. This is the staking position and represents the user's portion of the total amount staked. During this operation, the amount to stake is transferred from the `tx-sender` to the Staking Manager, and since the total amount staked and total shares increased, the contract storage is updated to reflect the new state. Refer to the [`stake`](#stake) function for detailed information.
 
 Unstaking performs the inverse operations. It first calculates the shares that correspond to the amount willing to unstake. Then, the unstaked amount is transferred from the Staking Manager to the `tx-sender` and, finally, state upates are performed to decrease user shares, total shares and total amount staked.
 
-Note that both staking and unstaking operations involve share management and mutate the staking status of a token in three dimensions: total shares, total amount staked and user's share-based staking position.
+{% hint style="info" %}
+Note that both **staking** and **unstaking** operations involve shares management and mutate the staking status of a token in three dimensions: total shares, total amount staked and user's share-based staking position.
+{% endhint %}
 
 #### Amount to shares conversion
 
 On every staking and unstaking action, an amount-to-shares conversion is perfomed using the following equation:
 
-$$ \textrm{Shares} = \frac{\textrm{Amount}}{\textrm{Total Staked}} \; \cdot \; \textrm{Total Shares}. $$
+$$
+\textrm{Shares} = \frac{\textrm{Amount}}{\textrm{Total Staked}} \; \cdot \; \textrm{Total Shares}.
+$$
 
 This is how [`get-shares-given-amount`](#supporting-features) function works. The ratio between the total staked amount and the total shares determines the "share price" in token units, i.e., how many tokens one share represents:
 
-$$ \textrm{Price} = \frac{\textrm{Total Staked}}{\textrm{Total Shares}} $$
+$$
+\textrm{Price} = \frac{\textrm{Total Staked}}{\textrm{Total Shares}}
+$$
 
 Before completing a staking or unstaking operation, these values are updated in a way that the share price remains constant. In contrast, reward accrual operations modify this price by maintaing total shares constant and incresing the total staked value.
 
 ## Roles
 
 - **Validators**: Trusted entities responsible for maintaining the system's integrity and synchronization. In the context of the XLink Staking Manager, they generate proofs of reward reinvestment on the external staking protocol.
-- **Updaters**: Actors resposible for submitting validator proofs to to update the total staked value for any token in the system.
-- **Governance**: Includes DAO and its enabled extensions. These roles are authenticated via the [`is-dao-or-extension`](#is-dao-or-extension) function. Extensions are authenticated as `contract-caller`, while the DAO is authenticated as the `tx-sender` in proposal execution scenarios.
+- **Updaters**: Actors resposible for submitting validator proofs to update the total staked value for any token in the system.
+- **Governance**: Includes DAO and its enabled extensions. These roles are authenticated via the [`is-dao-or-extension`](#is-dao-or-extension) function. Extensions are authenticated as `contract-caller`, while the DAO is authenticated as the `tx-sender` for proposal execution scenarios.
 
 ## Tokens
 
 Each token within the Staking Manager has the following attributes.
 
-- **Implementation contract**: A Stacks principal indicating the token's implementation contract, which needs to be approved in the [`approved-tokens`](#approved-tokens) map.
-- **Total staked**: A total amount staked, tracked in the [`total-staked`](#total-staked) map.
-- **Accrued rewards**: A total amount of rewards already restaked, tracked in the [`accrued-rewards`](#accrued-rewards) map.
-- **Total shares**: A total amount of shares issued for the token, tracked in the [`total-shares`](#total-shares) map.
-- **Staker registry**: A record of each staker's shares, where the sum of all staker shares equals the total shares. This ownership is tracked in the [`user-shares`](#user-shares) map.
+- **Implementation contract**: The Stacks principal indicating the token's implementation contract, which needs to be approved in the [`approved-tokens`](#approved-tokens) map.
+- **Total staked**: The total staked amount, tracked in the [`total-staked`](#total-staked) map.
+- **Accrued rewards**: The total amount of rewards already restaked, tracked in the [`accrued-rewards`](#accrued-rewards) map.
+- **Total shares**: The total amount of shares issued for the token, tracked in the [`total-shares`](#total-shares) map.
+- **Staker registry**: The record of each staker's shares, where the sum of all staker shares equals the total shares. This ownership is tracked in the [`user-shares`](#user-shares) map.
 
 ## Features
 
@@ -119,7 +125,7 @@ Adds accrued staking rewards for a specific token. The function requires a messa
 
 Actions performed:
 
-- Calculates the difference (`delta`) between previous and the new value of accrued rewards, given by the `accrued-rewards` value of the message. Mints the `delta` amount to the `xlink-staking` contract's balance to account for the new staked amount.
+- Calculates the difference (`delta`) between the previous and the updated amount of accrued rewards, given by the `accrued-rewards` value of the message. Mints the `delta` amount to the `xlink-staking` contract's balance to account for the new staked amount.
 - Updates the [`accrued-rewards`](#accrued-rewards) and [`total-staked`](#total-staked) maps.
 - Emits an `"add-rewards"` log with a detailed payload.
 
@@ -180,7 +186,7 @@ These features are protected by the [`is-dao-or-extension`](#is-dao-or-extension
 #### `withdraw`
 
 Withdraws an amount of any approved token and deducts it from the total staked amount. This function serves as an emergecy mechanism designed to adjust protocol values if necessary,
-though  such a situation is considered rare.
+though such a situation is considered rare.
 
 Actions performed:
 
