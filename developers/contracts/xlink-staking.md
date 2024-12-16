@@ -1,7 +1,7 @@
 # xlink-staking
 
 - Location: `xlink-dao/contracts/aux/xlink-staking.clar`
-<!-- - [Deployed contract](link-to-explorer) -->
+- [Deployed contract](https://explorer.stxer.xyz/txid/SP673Z4BPB4R73359K9HE55F2X91V5BJTN5SXZ5T.xlink-staking)
 
 The `xlink-staking` contract, also known as the **XLink Staking Manager**, is designed to manage liquid staking pools for multiple tokens and track staker positions within each pool. It holds users' staked funds, while the actual staking execution and reward reinvestment processes are managed off-chain by XLink's infrastructure.
 
