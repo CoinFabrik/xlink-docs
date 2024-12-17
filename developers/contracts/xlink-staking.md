@@ -289,7 +289,7 @@ Removes an entry in the [`validators-registry`](#validators-registry) map, using
 
 #### `is-dao-or-extension`
 
-Standard protocol function to check whether the `contract-caller` is an enabled extension within the DAO or the `tx-sender` is the DAO itself (proposal execution scenario). The enabled extension check is delegated to the LISA's `executor-dao` contract.
+Standard protocol function to check whether the `contract-caller` is an enabled extension within the DAO or the `tx-sender` is the DAO itself (proposal execution scenario). The enabled extension check is delegated to the XLink's `executor-dao` contract.
 
 #### Staking validation
 
