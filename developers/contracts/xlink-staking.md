@@ -62,10 +62,11 @@ The `as-contract` call type is the most common approach for liquid staking imple
 
 ```mermaid
 flowchart LR
-    Operator --Sends transtaction--> DAO
-    DAO --as-contract--> i["Proposal contract"]
+    Operator --Sends transtaction--> dao["Executor DAO"]
+    dao --as-contract--> i["Proposal 
+    contract"]
     i --contract-call--> sm[Staking Manager]
-    sm -.-o box[["**tx-sender**: DAO
+    sm -.-o box[["**tx-sender**: Executor DAO 
     **contract-caller**: Proposal contract"]]
 ```
 
