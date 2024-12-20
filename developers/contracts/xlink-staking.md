@@ -15,15 +15,15 @@ The lifecycle of liquid staking pools is based on three main operations:
 2. **Rewards accrual**. Rewards earned through the external staking protocol are periodically restaked, generating automatic compound interest for stakers.
 3. **Unstaking**. Users can withdraw their staked tokens, which include accumulated restaked rewards, at any time.
 
-These are the main three features of the `xlink-staking` contract. Each of these has an impact on the contract storage and generates on-chain events, which are listened by the XLink off-chain components to perform actions.
+These are the main three features of the `xlink-staking` contract. Each of these has an impact on the contract storage and generates on-chain events, which are listened by the XLink off-chain components to facilitate corresponding external staking operations.
 
 ### Shares-based staking
 
-The system utilizes **shares** instead of token amounts to represent users' staking positions. Shares provide a fixed representation of the users' proportional ownership of the total amount staked, which intrinsically grows over time due the reinvestment of the staking rewards.
+The system utilizes **shares** instead of token amounts to represent users' staking positions. Shares provide a fixed representation of the users' proportional ownership of the total amount staked, which intrinsically grows over time due to the reinvestment of the staking rewards.
 
 ## Reward accrual
 
-The account for the restaked rewards is permissionlessly performed by **updaters**, who submit messages signed by **validators**. This action is performed via the [`add-rewards`](#add-rewards) function and its the core operation of the liquid staking mechanism.
+The account for the restaked rewards is permissionlessly performed by **updaters**, who submit messages signed by **validators**. This action is performed via the [`add-rewards`](#add-rewards) function and it's the core operation of the liquid staking mechanism.
 
 Validators are XLink protocol actors responsible for maintaining the system's integrity and synchronization. In this sense, their role includes generating a **proof** whenever rewards are successfully collected and restaked in the external protocol.
 
@@ -63,10 +63,10 @@ The `as-contract` call type is the most common approach for liquid staking imple
 ```mermaid
 flowchart LR
     Operator --Sends transtaction--> dao["Executor DAO"]
-    dao --as-contract--> i["Proposal 
+    dao --as-contract--> i["Proposal
     contract"]
     i --contract-call--> sm[Staking Manager]
-    sm -.-o box[["**tx-sender**: Executor DAO 
+    sm -.-o box[["**tx-sender**: Executor DAO
     **contract-caller**: Proposal contract"]]
 ```
 
@@ -74,15 +74,15 @@ flowchart LR
 
 In the Staking Manager, the staker is represented by the `tx-sender`. As explained above, depending on the intermediary contract design, the staker may either be an end user or the endpoint/façade acting on behalf of the user. Therefore, every reference to "staker" (or `user`, as defined within the contract) applies to any of these two possibilities.
 
-Upon staking, the shares corresponding to the amount being staked are calculated and stored in the [`user-shares`](#user-shares) map. This is the staking position and represents the user's portion of the total amount staked. During this operation, the amount to stake is transferred from the `tx-sender` to the Staking Manager, and since the total amount staked and total shares increased, the contract storage is updated to reflect the new state. Refer to the [`stake`](#stake) function for detailed information.
+Upon staking, the shares corresponding to the amount being staked are calculated and stored in the [`user-shares`](#user-shares) map. This is the staking position and represents the user's portion of the total amount staked. During this operation, the amount to stake is transferred from the `tx-sender` to the Staking Manager, and since the total amount staked and total shares increased, the contract updates its internal state to reflect the changes. Refer to the [`stake`](#stake) function for detailed information.
 
 Unstaking performs the inverse operations. It first calculates the shares that correspond to the amount willing to unstake. Then, the unstaked amount is transferred from the Staking Manager to the `tx-sender` and, finally, state upates are performed to decrease user shares, total shares and total amount staked.
 
 {% hint style="info" %}
-Note that both **staking** and **unstaking** operations involve shares management and mutate the staking status of a token in three dimensions: total shares, total amount staked and user's share-based staking position.
+Note that both **staking** and **unstaking** operations involve shares management and update the staking status of the involved token across three dimensions: total shares, total amount staked and user's share-based staking position. Staking and unstaking shouldn't affect share's price.
 {% endhint %}
 
-#### Amount to shares conversion
+#### Token amount to shares conversion
 
 On every staking and unstaking action, an amount-to-shares conversion is perfomed using the following equation:
 
@@ -96,7 +96,15 @@ $$
 \textrm{Price} = \frac{\textrm{Total Staked}}{\textrm{Total Shares}}
 $$
 
-Before completing a staking or unstaking operation, these values are updated in a way that the share price remains constant. In contrast, reward accrual operations modify this price by maintaing total shares constant and incresing the total staked value.
+Before completing a staking or unstaking operation, these two values are updated in a way that the share price remains constant. In contrast, reward accrual operations modify this price by maintaing total shares constant and incresing the total staked value.
+
+<details>
+
+<summary>How does the share price remain constant after staking/unstaking operations?</summary>
+
+The price formula shows that the share price is the ratio between the staked tokens amount and the shares amount. Staking adds tokens, so to maintain the price, shares are issued at the price before the staking state update. Analogously, unstaking removes tokens, and to preserve the price, shares are burned at the same price as before the unstaking state update.
+
+</details>
 
 ## Roles
 
