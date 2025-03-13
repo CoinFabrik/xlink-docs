@@ -3,6 +3,7 @@
 - [What is XLink](README.md)
 
 - [Overview](overview/README.md)
+
   - [Introduction](overview/introduction.md)
   - [How XLink Bridge Works?](overview/how-xlink-works.md)
   - [Supported Blockchains and Tokens](overview/supported-blockchains-and-tokens.md)
@@ -14,10 +15,10 @@
   - [Guides](getting-started/guides/README.md)
     - [How to Connect your Wallet](getting-started/guides/how-to-connect-your-wallet.md)
     - [How to Swap non-bridgeable Tokens](getting-started/guides/how-to-swap-non-bridgeable-tokens.md)
-   
 - [Reserves](reserves.md)
 
 - [Integrations](integrations/README.md)
+
   - [Bitcoin](integrations/understanding-the-bitcoin-bridge.md)
   - [Bitcoin L2s](integrations/bitcoin-l2s.md)
   - [Non-Bitcoin chains](integrations/non-bitcoin-chains.md)
@@ -25,16 +26,17 @@
 - [Security Audits](security-audits.md)
 
 ## 🎮 Developers
-* [Smart Contracts](developers/contracts/README.md)
-  * [btc peg-in endpoint](developers/contracts/btc-peg-in-endpoint.md)
-  * [btc-peg-out-endpoint](developers/contracts/btc-peg-out-endpoint.md)
-  * [meta peg-in endpoint](developers/contracts/meta-peg-in-endpoint.md)
-  * [meta peg-out endpoint](developers/contracts/meta-peg-out-endpoint.md)
-  * [cross-peg-in-endpoint](developers/contracts/cross-peg-in-endpoint.md)
-  * [cross-peg-out-endpoint](developers/contracts/cross-peg-out-endpoint.md)
-  * [xlink-staking](developers/contracts/xlink-staking.md)
 
-<!-- 
+- [Smart Contracts](developers/contracts/README.md)
+  - [BTC Peg-In Endpoint](developers/contracts/btc-peg-in-endpoint.md)
+  - [BTC Peg-Out Endpoint](developers/contracts/btc-peg-out-endpoint.md)
+  - [Meta Peg-In Endpoint](developers/contracts/meta-peg-in-endpoint.md)
+  - [Meta Peg-Out Endpoint](developers/contracts/meta-peg-out-endpoint.md)
+  - [Cross-Peg-In Endpoint](developers/contracts/cross-peg-in-endpoint.md)
+  - [Cross-Peg-Out Endpoint](developers/contracts/cross-peg-out-endpoint.md)
+  - [XLink Staking](developers/contracts/xlink-staking.md)
+
+<!--
 
 Future work:
 
@@ -58,6 +60,6 @@ Future work:
 
 * [Glossary](resources/glossary.md)
 * [FAQs](resources/faqs.md)
-* [Networks](resources/networks.md) 
+* [Networks](resources/networks.md)
 
 -->
