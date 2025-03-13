@@ -11,7 +11,7 @@ This technical document provides a detailed overview of the module responsible f
 
 ## Storage
 
-###### _(all contracts include the following variables unless otherwise specified)_
+*All contracts include the following variables unless otherwise specified.*
 
 ### `is-paused`
 
@@ -43,9 +43,11 @@ A map that keeps track of the whitelist status of specific users. Each entry ass
 
 ## Features
 
-### `transfer-to-cross`
+### Public
 
-###### _(in contract cross-peg-in-endpoint-v2-04)_
+#### `transfer-to-cross`
+
+*In contract `cross-peg-in-endpoint-v2-04`.*
 
 This function enables peg-in operations to transfer tokens from an external EVM-like blockchain to Stacks. It validates the provided order by checking its hash and verifying signatures to meet a threshold of validators defined in `cross-bridge-registry-v2-01`. If the order is valid, it mints or transfers the bridged tokens to the sender of the transaction (`tx-sender`), and updates the token reserve for the source EVM chain. It then utilizes `cross-router-v2-03` to route the tokens based on the destination chain. In case the validation fails, the function initiates a refund process.
 
@@ -71,9 +73,9 @@ This function enables peg-in operations to transfer tokens from an external EVM-
                             }))
 ```
 
-### `transfer-to-cross-swap`
+#### `transfer-to-cross-swap`
 
-###### _(in contract cross-peg-in-v2-04-swap)_
+*In contract `cross-peg-in-v2-04-swap`.*
 
 This function facilitates advanced peg-in operations by incorporating token swapping during cross-chain transfers. It validates the order hash and signatures using `cross-bridge-registry-v2-01`, ensuring compliance with routing configurations, such as token paths and output amounts. Upon successful validation, the bridged tokens are swapped and routed to the recipient using `cross-router-v2-03`, following the same logic outlined in the `transfer-to-cross` feature. If validation fails, the function processes a refund.
 
@@ -103,9 +105,9 @@ This function facilitates advanced peg-in operations by incorporating token swap
                             }))
 ```
 
-### `transfer-to-launchpad`
+#### `transfer-to-launchpad`
 
-###### _(in contract cross-peg-in-v2-04-launchpad)_
+*In contract `cross-peg-in-v2-04-launchpad`.*
 
 This function enables peg-in operations linked to [launchpad projects](https://docs.alexlab.co/features/launchpad). It validates the order and signatures through `cross-bridge-registry-v2-01` and confirms compatibility with the launchpad parameters. Once validated, the function mints bridged tokens, transfers them to the recipient and registers the operation in the `alex-launchpad-v2-03` contract. In case of validation failure, a refund is processed.
 

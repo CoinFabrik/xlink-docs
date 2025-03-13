@@ -11,11 +11,11 @@ This functionality is implemented and distributed across the following contracts
 - `btc-peg-in-endpoint-v2-05-lisa`: extends Bitcoin peg-in operations by converting BTC into LiaBTC through intermediate bridging steps, ultimately enabling the issuance of BRC-20 tokens on Bitcoin.
 - `btc-peg-in-v2-05-launchpad`: facilitates BTC peg-ins specifically for participation in launchpad projects on Stacks.
 - `btc-peg-in-v2-07-swap`: enables the bridging of BTC into the Stacks network while enabling token swaps to convert BTC into other predefined assets during the process.
-- `btc-peg-in-v2-07a-agg`: facillitates the BTC peg-in process for swaps with non-ALEX liquidity aggregators. Liquidity aggregators optimize token exchanges by accessing multiple liquidity sources. This allows ALEX to execute swaps even when there are no ALEX pools for a specific token pair.
+- `btc-peg-in-v2-07a-agg`: facilitates the BTC peg-in process for swaps with non-ALEX liquidity aggregators. Liquidity aggregators optimize token exchanges by accessing multiple liquidity sources. This allows ALEX to execute swaps even when there are no ALEX pools for a specific token pair.
 
 ## Storage
 
-###### _(all contracts include the following variables unless otherwise specified)_
+*All contracts include the following variables unless otherwise specified.*
 
 ### `fee-to-address`
 
@@ -49,9 +49,9 @@ The percentage fee charged for peg-in transactions. By default, this value is `0
 
 The minimum fee required for a peg-in transaction, regardless of the transaction amount. For each transaction, the fee is the maximum value between the calculated fee amount and the `peg-in-min-fee`. By default, this value is `0`.
 
-### `btc-peg-outfee`
+### `btc-peg-out-fee`
 
-###### _(only present in btc-peg-in-v2-07-swap and btc-peg-in-v2-07a-agg)_
+*Only present in `btc-peg-in-v2-07-swap` and `btc-peg-in-v2-07a-agg`.*
 
 | Data     | Type   |
 | -------- | ------ |
@@ -61,7 +61,7 @@ This variable represents the percentage fee applied to BTC peg-out operations du
 
 ### `btc-peg-out-min-fee`
 
-###### _(only present in btc-peg-in-v2-07-swap and btc-peg-in-v2-07a-agg)_
+*Only present in `btc-peg-in-v2-07-swap` and `btc-peg-in-v2-07a-agg`.*
 
 | Data     | Type   |
 | -------- | ------ |
@@ -71,9 +71,11 @@ This variable sets the minimum fee required for BTC peg-out operations during cr
 
 ## Features
 
+### Public
+
 #### `finalize-peg-in-cross`
 
-###### _(in contract btc-peg-in-endpoint-v2-05)_
+*In contract `btc-peg-in-endpoint-v2-05`.*
 
 This function manages the peg-in process for transferring BTC to Stacks with support for cross-chain routing. It validates the provided Bitcoin transaction (which represents the transfer of BTC to a peg-in address on the Bitcoin network), ensuring it has been mined and meets the necessary conditions including an approved peg-in address. The function also performs additional checks involving a "reveal transaction," which specifies the token and chain-id for the destination chain.
 Once the transaction is validated, the function calculates fees, verifies that the asset being transferred is approved for bridging operations in the `.btc-bridge-registry-v2-01` contract, and registers the transaction status. Once validated, the function mints bridged BTC tokens and sends them to the recipient specified in the transaction details via the `.cross-router-v2-03`. If the validation or routing fails, a refund is executed.
@@ -93,7 +95,7 @@ Once the transaction is validated, the function calculates fees, verifies that t
 
 #### `finalize-peg-in-cross-swap`
 
-###### _(in contract btc-peg-in-v2-07-swap)_
+*In contract `btc-peg-in-v2-07-swap`.*
 
 This function mints bridged BTC tokens and swaps them according to routing instructions. Building upon the functionality of `finalize-peg-in-cross`, it adds token swapping capabilities during the peg-in process. In addition to the verifications performed in `finalize-peg-in-cross`, it ensures that routing configurations (e.g., minimum output amounts or token paths) are valid and meet the required conditions.
 During the process, the function temporarily modifies the `peg-out-fee` and `peg-out-min-fee` values within the `btc-peg-out-endpoint-v2-01` contract. These adjustments allow the transaction to apply specific fee values during the routing and swap operations. Once the process is completed, the original values are restored.
@@ -113,7 +115,7 @@ It interacts with `.btc-bridge-registry-v2-01` contract to register transaction 
 
 #### `finalize-peg-in-mint-liabtc`
 
-###### _(in contract btc-peg-in-endpoint-v2-05-lisa)_
+*In contract `btc-peg-in-endpoint-v2-05-lisa`.*
 
 The main purpose of this function is to convert BTC into LiaBTC, with the ultimate goal of issuing it as a BRC-20 token in Bitcoin. To achieve this, the function goes through an intermediate bridging step: after locking the desired amount of BTC on the Bitcoin network, it converts it into aBTC within the Stacks ecosystem. The aBTC is then wrapped into `wvLiaBTC`, a tokenized form of LiaBTC within Stacks.
 Once the conversion is complete, the function initiates a peg-out operation using the `.meta-peg-out-endpoint-v2-04` contract. This step bridges the `wvLiaBTC` back to Bitcoin and issues it as BRC-20 tokens, sending it to a specific inscription address provided in the order. The function verifies both the validation of the Bitcoin transaction and the fulfillment of all LiaBTC minting conditions.
@@ -135,9 +137,9 @@ It also registers the peg-in transaction in the `.btc-bridge-registry-v2-01` con
                         }))
 ```
 
-### `finalize-peg-in-launchpad`
+#### `finalize-peg-in-launchpad`
 
-###### _(in contract btc-peg-in-v2-05-launchpad)_
+*In contract `btc-peg-in-v2-05-launchpad`.*
 
 This function is tailored for peg-ins associated with launchpad projects on Stacks. It uses `.btc-bridge-registry-v2-01` to validate and register transaction details while ensuring compatibility with the project’s parameters. These parameters include fields such as `user`, `launch-id`, and `payment-token-trait`, which define the specifics of the launchpad operation.
 The function first mints bridged BTC tokens for the user and then registers the operation in the `.alex-launchpad-v2-03` contract. This registration involves transferring the minted bridged tokens assets to the launchpad contract on behalf of the user, where they are associated with the launchpad project.
@@ -153,9 +155,9 @@ In case of any error, it invokes the internal [refund](btc-peg-in-endpoint.md#re
 (order-idx uint)
 ```
 
-### `finalize-peg-in-agg`
+#### `finalize-peg-in-agg`
 
-###### _(in contract btc-peg-in-v2-07a-agg)_
+*In contract `btc-peg-in-v2-07a-agg`.*
 
 This function facilitates a BTC peg-in operation designed for aggregated cross-chain routing. Unlike standard peg-in processes where users receive aBTC directly on Stacks, this function integrates a routing mechanism that forwards the bridged tokens for immediate cross-chain processing.
 The process begins by verifying that the provided Bitcoin transaction has been mined and meets all peg-in validation criteria. It checks that the peg-in address is approved and calculates the required transaction fees. Once validated, the function mints aBTC for the net amount (after deducting fees) and registers the peg-in transaction in the `.btc-bridge-registry-v2-01` contract.
@@ -225,7 +227,7 @@ This feature allows to set the minimum fee required for a peg-in transaction.
 
 #### `set-btc-peg-out-fee`
 
-###### _(only present in btc-peg-in-v2-07-swap and btc-peg-in-v2-07a-agg)_
+*Only present in `btc-peg-in-v2-07-swap` and `btc-peg-in-v2-07a-agg`.*
 
 This feature sets the percentage fee applied to BTC peg-out operations.
 
@@ -237,7 +239,7 @@ This feature sets the percentage fee applied to BTC peg-out operations.
 
 #### `set-btc-peg-out-min-fee`
 
-###### _(only present in btc-peg-in-v2-07-swap and btc-peg-in-v2-07a-agg)_
+*Only present in `btc-peg-in-v2-07-swap` and `btc-peg-in-v2-07a-agg`.*
 
 This feature establishes the minimum fee required for BTC peg-out operations.
 
@@ -284,11 +286,11 @@ The following functions are tools to assist the off-chain activities.
 (tx (buff 32768))
 ```
 
-#### `get-btc-peg-out-fee` _(only present in btc-peg-in-v2-07-swap and btc-peg-in-v2-07a-agg)_
+#### `get-btc-peg-out-fee` *Only present in `btc-peg-in-v2-07-swap` and `btc-peg-in-v2-07a-agg`.*
 
-#### `get-btc-peg-out-min-fee` _(only present in btc-peg-in-v2-07-swap and btc-peg-in-v2-07a-agg)_
+#### `get-btc-peg-out-min-fee` *Only present in `btc-peg-in-v2-07-swap` and `btc-peg-in-v2-07a-agg`.*
 
-#### `get-liabtc-decimals` _(only present in btc-peg-in-endpoint-v2-05-lisa)_
+#### `get-liabtc-decimals` *Only present in `btc-peg-in-endpoint-v2-05-lisa`.*
 
 ## Contract calls (interactions)
 

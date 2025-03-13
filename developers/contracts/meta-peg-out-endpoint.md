@@ -9,6 +9,8 @@ Unlike the meta-peg-in contract, the meta-peg-out feature is specifically design
 
 ## Storage
 
+*All contracts include the following variables unless otherwise specified.*
+
 ### `paused`
 
 | Data     | Type   |
@@ -37,12 +39,14 @@ This constant specifies the block height of the underlying burn chain at the tim
 
 ## Features
 
+### Public
+
 The peg-out is a multi-step process comprising several phases to ensure secure and orderly transactions. The process begins with a peg-out request to initiate the transfer of tokens out of the Stacks network. Configured grace periods then allow users to either revoke their request or claim it. Once a peg-out request is claimed, the final step is to finalize the peg-out, executing the transfer and updating the relevant records.
 Each of these steps is implemented through dedicated contract functions, which are explained in detail below.
 
 #### `request-peg-out`
 
-###### _(in contract meta-peg-out-endpoint-v2-04)_
+_In contract `meta-peg-out-endpoint-v2-04`._
 
 In this first step, the `tx-sender` requests a peg-out a specified amount of previously bridged tokens. Upon initiation, the net amount along with fee costs are escrowed by transferring the token and the gas fee token (`token-abtc`) to the contract, where they remain until the operation is either finalized or revoked.
 
@@ -65,7 +69,7 @@ Once these validations are met, the operation is registered in the meta registry
 
 #### `claim-peg-out`
 
-###### _(in contract meta-peg-out-endpoint-v2-04)_
+_In contract `meta-peg-out-endpoint-v2-04`._
 
 A next potential step is to claim the request previously issued. This step is critical, as it marks the request as ready for finalization. This action is executed by calling the function with the id of the request, along with the `fulfilled-by` parameter, which designates the address responsible for executing the bitcoin operation.
 
@@ -86,7 +90,7 @@ Once these conditions are met, the final step is to register the claim in the me
 
 #### `finalize-peg-out-on-index`
 
-###### _(in contract meta-peg-out-endpoint-v2-04)_
+_In contract `meta-peg-out-endpoint-v2-04`._
 
 Finalizing a peg-out is the final step in committing the process. This function takes in the burn chain (Bitcoin) transaction that corresponds to the Stacks layer operation and executes the peg-out request along with all related token transfers and their corresponding fees. The finalization can be performed by either a peg-in address or a third-party address.
 
@@ -134,7 +138,7 @@ This operation involves indexing the specified transaction through the `oracle-v
 
 #### `revoke-peg-out`
 
-###### _(in contract meta-peg-out-endpoint-v2-04)_
+_In contract `meta-peg-out-endpoint-v2-04`._
 
 In certain scenarios, a requested peg-out may need to be revoked, allowing users to retract it if necessary.
 

@@ -13,7 +13,7 @@ This functionality is implemented and distributed across the following contracts
 
 ## Storage
 
-###### _(all contracts include the following variables unless otherwise specified)_
+*All contracts include the following variables unless otherwise specified.*
 
 ### `paused`
 
@@ -41,7 +41,7 @@ This value represents the fee required for peg-in operations, expressed in fixed
 
 ### `btc-peg-out-fee`
 
-###### _(only present in meta-peg-in-v2-06-swap)_
+*Only present in `meta-peg-in-v2-06-swap`.*
 
 | Data     | Type   |
 | -------- | ------ |
@@ -51,7 +51,7 @@ This variable represents the percentage fee applied to BTC peg-out operations du
 
 ### `btc-peg-out-min-fee`
 
-###### _(only present in meta-peg-in-v2-06-swap)_
+*Only present in `meta-peg-in-v2-06-swap`.*
 
 | Data     | Type   |
 | -------- | ------ |
@@ -71,9 +71,11 @@ This constant denotes the block height at which the contract was deployed on the
 
 ## Features
 
+### Public
+
 #### `finalize-peg-in-cross-on-index`
 
-###### _(in contract meta-peg-in-endpoint-v2-04)_
+*In contract `meta-peg-in-endpoint-v2-04`.*
 
 This function processes the order recipient, which is extracted and decoded from the provided reveal transaction. The reveal transaction contains additional details about the peg-in operation, such as the recipient's address and the `order-idx`. In this scenario, the recipient may be on a different blockchain. To facilitate the peg-in process, the contract calls the supporting contract `cross-router-v2-03`, to route the tokens based on the destination chain.
 As this peg-in feature is designed for Bitcoin metaprotocol tokens (e.g., BRC-20), the primary objective of this function is to facilitate 'crossing' to an EVM network. In such cases, the `cross-router-v2-03` contract will subsequently call `cross-peg-out-endpoint-v2-01` to execute the transfer of BRC-20 tokens from Bitcoin to an EVM chain. If any errors occur during the cross-transaction data validation, the function triggers a refund mechanism.
@@ -109,7 +111,7 @@ As this peg-in feature is designed for Bitcoin metaprotocol tokens (e.g., BRC-20
 
 #### `finalize-peg-in-cross-swap-on-index`
 
-###### _(in contract meta-peg-in-v2-06-swap)_
+*In contract `meta-peg-in-v2-06-swap`.*
 
 Similar to the peg-in-cross, the peg-in-cross-swap involves a cross-blockchain operation with an additional asset swapping capability. This feature is useful when the desired target token requires intermediate swap operations. The function achieves this by receiving a list of token traits (interfaces that define the behavior of tokens in the operation) involved in the operation up to the target token. Refer to the [AMM Pool documentation](https://docs.alexgo.io/developers/protocol-contracts#amm-trading-pool) for more details. In addition to the sender (from) and recipient (to) addresses, the order details in the reveal transaction include information about the swap route. This swap route is validated against the `amm-pool-v2-01` contract through the `cross-router-v2-03` contract to check pool parameters. Additionally, this function includes a refund mechanism that gets triggered in case any errors occur during the cross-swap transaction validation.
 
@@ -140,7 +142,7 @@ Similar to the peg-in-cross, the peg-in-cross-swap involves a cross-blockchain o
 
 #### `finalize-peg-in-request-burn-liabtc-on-index`
 
-###### _(in contract meta-peg-in-endpoint-v2-04-lisa)_
+*In contract `meta-peg-in-endpoint-v2-04-lisa`.*
 
 This function handles a peg-in operation that involves requesting the burn of LiaBTC tokens in the ALEX system. It begins by indexing the provided Bitcoin transaction using the `oracle-v2-01` contract to verify its validity and ensure it has not been processed before. Once the transaction is validated, the function calls `finalize-peg-in-request-burn-liabtc` to complete the burn request.
 The function interacts with the `meta-bridge-registry-v2-03-lisa` contract to retrieve and validate token pair details, which refer to the registered combination of a token and its target chain ID, and with the `liabtc-mint-endpoint` to register the burn request. Additionally, it utilizes the `clarity-bitcoin-v1-07` contract to extract transaction details such as the SegWit transaction ID. Any accrued rewards or updates, which are likely tied to the use or staking of LiaBTC tokens within the ALEX system, are processed through the provided `liabtc-message` and validated using signature packs.
@@ -177,7 +179,7 @@ The function includes mechanisms to handle fees, using the `btc-bridge-registry-
 
 #### `finalize-peg-in-update-burn-liabtc`
 
-###### _(in contract meta-peg-in-endpoint-v2-04-lisa)_
+*In contract `meta-peg-in-endpoint-v2-04-lisa`.*
 
 This function finalizes or revokes a burn request for LiaBTC tokens initiated in the ALEX system. It validates the Bitcoin transaction through the `oracle-v2-01` contract, ensuring it was mined and indexed correctly. It interacts with the `meta-bridge-registry-v2-03-lisa` contract to verify the status of the burn request and update its details.
 If the burn request is finalized (status `0x01`), the function confirms the burn through the `liabtc-mint-endpoint` and completes the operation. For revocations (status `0x02`), the function handles re-minting of LiaBTC tokens and executes a peg-out process using the `meta-peg-out-endpoint-v2-04`.
@@ -260,7 +262,7 @@ A public function, governed through the `is-dao-or-extension`, that establishes 
 
 #### `set-btc-peg-out-fee`
 
-###### _(only present in meta-peg-in-v2-06-swap)_
+*(Only present in `meta-peg-in-v2-06-swap`)*
 
 A public function, governed through the `is-dao-or-extension`, that sets the percentage fee applied to BTC peg-out operations.
 
@@ -272,7 +274,7 @@ A public function, governed through the `is-dao-or-extension`, that sets the per
 
 #### `set-btc-peg-out-min-fee`
 
-###### _(only present in meta-peg-in-v2-06-swap)_
+*(Only present in `meta-peg-in-v2-06-swap`)*
 
 A public function, governed through the `is-dao-or-extension`, that establishes the minimum fee required for BTC peg-out operations.
 
@@ -291,9 +293,9 @@ A public function, governed through the `is-dao-or-extension`, that establishes 
 - `get-pair-details-many`
 - `get-tick-to-pair-or-fail`
 - `get-peg-in-sent-or-default`
-- `get-btc-peg-out-fee` _(only present in meta-peg-in-v2-06-swap)_
-- `get-btc-peg-out-min-fee` _(only present in meta-peg-in-v2-06-swap)_
-- `get-liabtc-decimals` _(only present in meta-peg-in-endpoint-v2-04-lisa)_
+- `get-btc-peg-out-fee` *Only present in `meta-peg-in-v2-06-swap`.*
+- `get-btc-peg-out-min-fee` *Only present in `meta-peg-in-v2-06-swap`.*
+- `get-liabtc-decimals` *Only present in `meta-peg-in-endpoint-v2-04-lisa`.*
 
 ### Relevant internal functions
 
@@ -340,6 +342,6 @@ A public function, governed through the `is-dao-or-extension`, that establishes 
 | `err-tx-mined-before-start`                                               | `(err u1015)` |
 | `err-slippage-error`                                                      | `(err u1016)` |
 | `err-bitcoin-tx-not-mined`                                                | `(err u1017)` |
-| `err-invalid-request` _(only present in meta-peg-in-endpoint-v2-04-lisa)_ | `(err u1018)` |
+| `err-invalid-request` *(Only present in `meta-peg-in-endpoint-v2-04-lisa`)* | `(err u1018)` |
 
 <!-- Documentation Contract Template v0.1.0 -->
